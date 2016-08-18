@@ -137,9 +137,12 @@ class PatchPainter{
 							const next = lines[index + 1];
 							return index >= i && (next === undefined || next[0] !== "+");
 						});
-						output.splice(i, 0, new ChangeBlock(lines.slice(lastRemoval, lastAddition + 1), i - lastRemoval));
-						i = lastAddition;
 						
+						const changes  = lines.slice(lastRemoval, lastAddition + 1);
+						const midpoint = i - lastRemoval;
+						output.splice(i, 0, new ChangeBlock(changes, midpoint));
+						
+						i = lastAddition;
 						lastRemoval = null;
 						removals    = [];
 						continue;
@@ -188,6 +191,18 @@ class PatchPainter{
 		
 		
 		return output.map(i => i.toString()).join("");
+	}
+	
+	
+	prependIndicators(input){
+		const addSrc = ("^(" + SGR_ADDED_CHAR   + "|" + SGR_ADDED_LINE   + ")").replace(/\[/g, "\\[");
+		const rmSrc  = ("^(" + SGR_REMOVED_CHAR + "|" + SGR_REMOVED_LINE + ")").replace(/\[/g, "\\[");
+		const nmlSrc = ("^(" + SGR_NORMAL_LINE  + "|" + SGR_RESET_LINE   + ")").replace(/\[/g, "\\[")
+		
+		return input
+			.replace(new RegExp(addSrc, "gm"), `${SGR_ADDED_LINE}+$1`)
+			.replace(new RegExp(rmSrc,  "gm"), `${SGR_REMOVED_LINE}-$1`)
+			.replace(new RegExp(nmlSrc, "gm"), " $1")
 	}
 }
 

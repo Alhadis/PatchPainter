@@ -5,5 +5,6 @@ const PatchPainter = require("./patch-painter");
 
 const fs = require("fs");
 
-const result = PatchPainter.format(fs.readFileSync("sample.diff").toString());
+let result = PatchPainter.format(fs.readFileSync("sample.diff").toString());
+result = PatchPainter.prependIndicators(result);
 console.log(result);
