@@ -1,0 +1,9 @@
+{
+	"name": "PatchPainter",
+	"version": "0.0.0",
+	"description": "Tiny class to help format diff output",
+	"private": true,
+	"repository": "https://github.com/Alhadis/PatchPainter",
+	"dependencies": {"diff": "*"},
+	"engines": {"node": "*"}
+}
