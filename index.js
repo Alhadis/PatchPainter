@@ -2,16 +2,7 @@
 "use strict";
 
 const PatchPainter = require("./patch-painter");
-
 const fs = require("fs");
+const file = fs.readFileSync("tests/sample.diff").toString();
 
-let result = PatchPainter.format(fs.readFileSync("sample.diff").toString());
-result = PatchPainter.prependIndicators(result);
-
-
-const label = process.argv.find(s => /-li?/.test(s));
-if(label)
-	console.log(PatchPainter.showSGR(result, label.match(/i$/)));
-
-else
-	console.log(result);
+let result = PatchPainter.format(file);
