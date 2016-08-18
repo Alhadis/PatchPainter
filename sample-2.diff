@@ -1,0 +1,32 @@
+commit 1cafcaa16cf24fc4e231c4ab78aa0f7b87e39c05
+Author: John Gardner <gardnerjohng@gmail.com>
+Date:   Sun Aug 14 18:10:00 2016 +1000
+
+diff --git a/t.js b/t.js
+index 733c050..3dfa77b 100644
+--- a/t.js
++++ b/t.js
+@@ -1,16 +1,16 @@
+-{
++const B = {
+ alpha: "A",
+ bravo: "B",
+ delta: {
+-one: "1",
+-two: "2",
++one: "I",
++two: "II",
+ three: "3"
+ },
+-omega: "O",
++omega: "o",
+ empty: "",
+ list: [
+-"laptops",
+ "apples",
+-"oranges"
++"oranges",
++"laptops"
+ ]
+ };
+\ No newline at end of file
