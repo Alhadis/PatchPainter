@@ -204,6 +204,27 @@ class PatchPainter{
 			.replace(new RegExp(rmSrc,  "gm"), `${SGR_REMOVED_LINE}-$1`)
 			.replace(new RegExp(nmlSrc, "gm"), " $1")
 	}
+	
+	
+	/**
+	 * Debugging method to help pinpoint errors with TTY output.
+	 *
+	 * @private
+	 * @param {String} input
+	 * @param {Boolean} inline
+	 * @return {String} output
+	 */
+	showSGR(input, inline = false){
+		let s = inline ? ["{", "}"] : ["\n", "\n"];
+		return input
+			.replace(/\x1B\[48;5;28;38;5;82m/g, s.join("SGR_ADDED_CHAR"))
+			.replace(/\x1B\[38;5;2m/g, s.join("SGR_ADDED_LINE"))
+			.replace(/\x1B\[38;5;8m/g, s.join("SGR_NORMAL_LINE"))
+			.replace(/\x1B\[48;5;88;38;5;196m/g, s.join("SGR_REMOVED_CHAR"))
+			.replace(/\x1B\[38;5;1m/g, s.join("SGR_REMOVED_LINE"))
+			.replace(/\x1B\[49;39m/g, s.join("SGR_RESET_CHAR"))
+			.replace(/\x1B\[0m/g, s.join("SGR_RESET_LINE"));
+	}
 }
 
 module.exports = new PatchPainter;

@@ -7,4 +7,9 @@ const fs = require("fs");
 
 let result = PatchPainter.format(fs.readFileSync("sample.diff").toString());
 result = PatchPainter.prependIndicators(result);
-console.log(result);
+
+if(process.argv.indexOf("-l") !== -1)
+	console.log(PatchPainter.showSGR(result));
+
+else
+	console.log(result);
