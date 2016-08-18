@@ -145,7 +145,10 @@ class PatchPainter{
 						continue;
 					}
 					
-					else output.push(new Token(ADDITION, line));
+					else output.push(
+						new Token(ADDITION, line),
+						new Newline()
+					);
 					break;
 				}
 				
@@ -153,14 +156,20 @@ class PatchPainter{
 				case " ":{
 					if(removals.length !== 0)
 						resetRemovals(i);
-					output.push(new Token(NORMAL, line));
+					
+					output.push(
+						new Token(NORMAL, line),
+						new Newline()
+					);
 					break;
 				}
 				
 				
 				/** Divider */
 				case "@":{
-					if(removals.length !== 0) resetRemovals(i);
+					if(removals.length !== 0)
+						resetRemovals(i);
+					
 					if(output.length) output.push(new Token(DIVIDER));
 					break;
 				}
@@ -169,12 +178,16 @@ class PatchPainter{
 
 		/** Drop any collected removals into the returned array */
 		function resetRemovals(from){
-			output.splice(from, 0, ...removals.map(n => new Token(REMOVAL, n)));
+			const rm = [];
+			for(let r of removals.map(n => new Token(REMOVAL, n)))
+				rm.push(r, new Newline());
+			output.splice(from, 0, ...rm);
 			lastRemoval = null;
 			removals    = [];
 		}
 		
-		return output;
+		
+		return output.map(i => i.toString()).join("");
 	}
 }
 
