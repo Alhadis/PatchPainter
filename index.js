@@ -3,7 +3,7 @@
 
 const PatchPainter = require("./patch-painter");
 const fs = require("fs");
-const file = fs.readFileSync("tests/sample.diff").toString();
+const file = fs.readFileSync("tests/ee29465.diff").toString();
 const {argv} = process
 
 if(argv.indexOf("-h") !== -1){

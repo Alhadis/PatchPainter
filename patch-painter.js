@@ -66,7 +66,7 @@ class PatchPainter{
 	format(input, format = TTY){
 		const fileDiffs = input
 			.split(/^diff /g)
-			.map(f => f.replace(/^[^\x00]+?\n(?=@@ )/g, "").split(/^(?=@@ )/gm).filter(i => i && i.length))
+			.map(f => f.replace(/(?:^|\ndiff )[^\x00]+?\n(?=@@ )/g, "").split(/^(?=@@ )/gm).filter(i => i && i.length))
 			.filter(i => i && i.length && (i.length !== 1 || i[0] !== ""))
 		
 		return fileDiffs.map(file => {
