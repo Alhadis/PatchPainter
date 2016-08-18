@@ -7,9 +7,8 @@ const SPECIAL           = -1;
 const NORMAL            = 0;
 const REMOVAL           = 1;
 const ADDITION          = 2;
-const DIVIDER           = 3;
-const CHAR_REMOVAL      = 4;
-const CHAR_ADDITION     = 5;
+const CHAR_REMOVAL      = 3;
+const CHAR_ADDITION     = 4;
 
 /** SGR escape sequences for coloured terminal output */
 const SGR_ADDED_CHAR    = "\x1B[48;5;28;38;5;82m";
@@ -43,14 +42,13 @@ class Token{
 			case ADDITION:      return SGR_ADDED_LINE   + this.text + SGR_RESET_LINE;
 			case CHAR_REMOVAL:  return SGR_REMOVED_CHAR + this.text + SGR_RESET_CHAR;
 			case CHAR_ADDITION: return SGR_ADDED_CHAR   + this.text + SGR_RESET_CHAR;
-			case DIVIDER:       return "\n";
 			case SPECIAL:       return this.text;
 		}
 	}
 }
 
 
-class Newline extends Token{
+class LineBreak extends Token{
 	
 	constructor(resetStyle = false){
 		super(SPECIAL, "\n");
@@ -63,6 +61,14 @@ class Newline extends Token{
 }
 
 
+class Divider extends LineBreak{
+	constructor(){
+		super(true);
+	}
+}
+
+
+
 class ChangeBlock extends Token{
 	
 	constructor(lines, midpoint){
@@ -72,23 +78,55 @@ class ChangeBlock extends Token{
 		lines = lines.map(l => l.replace(/^[-+]/, ""));
 		const removed = lines.slice(0, midpoint);
 		const added   = lines.slice(midpoint);
-		const changes = diff.diffWordsWithSpace(removed.join("\n"), added.join("\n"));
 		this.tokens   = [];
+		
+		const changes = [];
+		diff.diffWordsWithSpace(removed.join("\n"), added.join("\n"))
+			.forEach(diff => {
+				
+				if("\n" !== diff.value && /\n/.test(diff.value)){
+					diff.value.split(/\n/g).forEach((value, index) => {
+						if(index)
+							changes.push({value: "\n"});
+						const output = Object.assign({}, diff);
+						output.value = value;
+						changes.push(output);
+					});
+				}
+				
+				else changes.push(diff);
+			})
 		
 		/** Show removals first */
 		for(let c of changes){
-			if(c.removed)     this.tokens.push(new Token(CHAR_REMOVAL, c.value, true));
-			else if(!c.added) this.tokens.push(new Token(REMOVAL, c.value, true));
+			if(c.value === "\n") this.tokens.push(new LineBreak());
+			else if(c.removed)   this.tokens.push(new Token(CHAR_REMOVAL, c.value, true));
+			else if(!c.added)    this.tokens.push(new Token(REMOVAL, c.value, true));
 		}
 		
-		this.tokens.push(new Newline());
+		this.nl();
 		
 		/** Then show additions */
 		for(let c of changes){
-			if(c.added)         this.tokens.push(new Token(CHAR_ADDITION, c.value, true));
-			else if(!c.removed) this.tokens.push(new Token(ADDITION, c.value, true));
+			if(c.value === "\n") this.tokens.push(new LineBreak());
+			else if(c.added)     this.tokens.push(new Token(CHAR_ADDITION, c.value, true));
+			else if(!c.removed)  this.tokens.push(new Token(ADDITION, c.value, true));
 		}
-		this.tokens.push(new Newline(true));
+		
+		this.nl(true);
+	}
+	
+	
+	/**
+	 * Push a newline onto the token-list, unless the last token WAS a newline.
+	 *
+	 * @param {Boolean} resetStyle - Passed to LineBreak's constructor
+	 * @private
+	 */
+	nl(resetStyle = false){
+		const lastToken = this.tokens[this.tokens.length - 1];
+		if(!(lastToken instanceof LineBreak))
+			this.tokens.push(new LineBreak(resetStyle));
 	}
 	
 	toString(){
@@ -150,7 +188,7 @@ class PatchPainter{
 					
 					else output.push(
 						new Token(ADDITION, line),
-						new Newline()
+						new LineBreak()
 					);
 					break;
 				}
@@ -162,7 +200,7 @@ class PatchPainter{
 					
 					output.push(
 						new Token(NORMAL, line),
-						new Newline()
+						new LineBreak()
 					);
 					break;
 				}
@@ -173,7 +211,11 @@ class PatchPainter{
 					if(removals.length !== 0)
 						resetRemovals(i);
 					
-					if(output.length) output.push(new Token(DIVIDER));
+					if(output.length)
+						output.push(
+							new Divider(),
+							new LineBreak()
+						);
 					break;
 				}
 			}
@@ -183,7 +225,7 @@ class PatchPainter{
 		function resetRemovals(from){
 			const rm = [];
 			for(let r of removals.map(n => new Token(REMOVAL, n)))
-				rm.push(r, new Newline());
+				rm.push(r, new LineBreak());
 			output.splice(from, 0, ...rm);
 			lastRemoval = null;
 			removals    = [];

@@ -8,8 +8,10 @@ const fs = require("fs");
 let result = PatchPainter.format(fs.readFileSync("sample.diff").toString());
 result = PatchPainter.prependIndicators(result);
 
-if(process.argv.indexOf("-l") !== -1)
-	console.log(PatchPainter.showSGR(result));
+
+const label = process.argv.find(s => /-li?/.test(s));
+if(label)
+	console.log(PatchPainter.showSGR(result, label.match(/i$/)));
 
 else
 	console.log(result);
