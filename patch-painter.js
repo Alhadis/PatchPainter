@@ -220,6 +220,8 @@ class PatchPainter{
 				else if(!c.removed) output += SGR_ADDED_LINE + c.value + SGR_RESET;
 			}
 			return output
+				.replace(/\x1B\[38;5;1m\n(?!\x1B)/gm, "$&-")
+				.replace(/\x1B\[38;5;2m\n(?!\x1B)/gm, "$&+")
 				.replace(/^((?:\x1B\[0m)?\x1B\[(?:38;5;1|48;5;88;38;5;196)m)/gm, SGR_RESET + SGR_REMOVED_LINE + "-$1")
 				.replace(/^((?:\x1B\[0m)?\x1B\[(?:38;5;2|48;5;28;38;5;82)m)/gm,  SGR_RESET + SGR_ADDED_LINE   + "+$1")
 		}
@@ -293,6 +295,27 @@ class PatchPainter{
 	 */
 	divider(line, format = TTY){
 		return "";
+	}
+	
+	
+	
+	/**
+	 * Replace SGR escape sequences with their corresponding constant names.
+	 *
+	 * Intended to be used when debugging TTY-formatted output.
+	 *
+	 * @private
+	 * @param {String} input
+	 * @return {String} output
+	 */
+	debugSGR(input){
+		return input
+			.replace(new RegExp(SGR_ADDED_CHAR.replace(/\[/g, "\\["), "gm"), "{ADDED_CHAR}")
+			.replace(new RegExp(SGR_ADDED_LINE.replace(/\[/g, "\\["), "gm"), "{ADDED_LINE}")
+			.replace(new RegExp(SGR_REMOVED_CHAR.replace(/\[/g, "\\["), "gm"), "{REMOVED_CHAR}")
+			.replace(new RegExp(SGR_REMOVED_LINE.replace(/\[/g, "\\["), "gm"), "{REMOVED_LINE}")
+			.replace(new RegExp(SGR_NORMAL.replace(/\[/g, "\\["), "gm"), "{NORMAL}")
+			.replace(new RegExp(SGR_RESET.replace(/\[/g, "\\["), "gm"), "{RESET}")
 	}
 }
 
