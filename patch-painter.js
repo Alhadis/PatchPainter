@@ -41,6 +41,17 @@ class PatchPainter{
 	
 	
 	/**
+	 * Generate an HTML representation of a formatted diff.
+	 *
+	 * @param {String} diff
+	 * @return {String} output
+	 */
+	html(diff){
+		return this.flatten(this.format(diff, HTML)).join("");
+	}
+	
+	
+	/**
 	 * Add formatting to a plain-text diff.
 	 *
 	 * This is primarily a "low-level" function: its result is returned
@@ -159,24 +170,59 @@ class PatchPainter{
 		additions   = additions.replace(strip, "");
 		
 		const changes = diff.diffWordsWithSpace(removals, additions);
+		const putHTML = (added) => {
+			let lines = "";
+			
+			for(let c of changes){
+				if(added){
+					if(c.added)         lines += "<mark>" + c.value + "</mark>";
+					else if(!c.removed) lines += c.value;
+				}
+				
+				else{
+					if(c.removed)       lines += "<mark>" + c.value + "</mark>";
+					else if(!c.added)   lines += c.value;
+				}
+			}
+			const tag   = added ? "ins" : "del";
+			const open  = "<"  + tag + ">";
+			const close = "</" + tag + ">";
+			output += (open + lines + close);
+		};
 		
-		for(let c of changes){
-			if(c.removed)       output += SGR_REMOVED_CHAR + c.value + SGR_RESET;
-			else if(!c.added)   output += SGR_REMOVED_LINE + c.value + SGR_RESET;
+		
+		/** Display removed lines first */
+		if(HTML === format)
+			putHTML();
+		
+		else{
+			for(let c of changes){
+				if(c.removed)       output += SGR_REMOVED_CHAR + c.value + SGR_RESET;
+				else if(!c.added)   output += SGR_REMOVED_LINE + c.value + SGR_RESET;
+			}
+			
+			/** Always make sure there's a newline in-between */
+			if(!/\n(?:\x1B\[[\d;]+m)?$/.test(output))
+				output += "\n";
+		}
+
+		
+		
+		/** Then, show the insertions */
+		if(HTML === format){
+			putHTML(true);
+			return output;
 		}
 		
-		/** Always make sure there's a newline in-between */
-		if(!/\n(?:\x1B\[[\d;]+m)?$/.test(output))
-			output += "\n";
-		
-		for(let c of changes){
-			if(c.added)         output += SGR_ADDED_CHAR + c.value + SGR_RESET;
-			else if(!c.removed) output += SGR_ADDED_LINE + c.value + SGR_RESET;
+		else{
+			for(let c of changes){
+				if(c.added)         output += SGR_ADDED_CHAR + c.value + SGR_RESET;
+				else if(!c.removed) output += SGR_ADDED_LINE + c.value + SGR_RESET;
+			}
+			return output
+				.replace(/^((?:\x1B\[0m)?\x1B\[(?:38;5;1|48;5;88;38;5;196)m)/gm, SGR_RESET + SGR_REMOVED_LINE + "-$1")
+				.replace(/^((?:\x1B\[0m)?\x1B\[(?:38;5;2|48;5;28;38;5;82)m)/gm,  SGR_RESET + SGR_ADDED_LINE   + "+$1")
 		}
-		
-		return output
-			.replace(/^((?:\x1B\[0m)?\x1B\[(?:38;5;1|48;5;88;38;5;196)m)/gm, SGR_RESET + SGR_REMOVED_LINE + "-$1")
-			.replace(/^((?:\x1B\[0m)?\x1B\[(?:38;5;2|48;5;28;38;5;82)m)/gm,  SGR_RESET + SGR_ADDED_LINE   + "+$1")
 	}
 	
 	
@@ -189,6 +235,11 @@ class PatchPainter{
 	 * @return {String} output
 	 */
 	removal(line, format = TTY){
+		if(HTML === format){
+			line = line.replace(/^-/, "");
+			return `<del>${line}</del>\n`;
+		}
+		
 		line += "\n";
 		return SGR_REMOVED_LINE + line + SGR_RESET;
 	}
@@ -203,6 +254,11 @@ class PatchPainter{
 	 * @return {String} output
 	 */
 	addition(line, format = TTY){
+		if(HTML === format){
+			line = line.replace(/^\+/, "");
+			return `<ins>${line}</ins>\n`;
+		}
+		
 		line += "\n";
 		return SGR_ADDED_LINE + line + SGR_RESET;
 	}
@@ -217,6 +273,11 @@ class PatchPainter{
 	 * @return {String} output
 	 */
 	context(line, format = TTY){
+		if(HTML === format){
+			line = line.replace(/^\x20/, "");
+			return `<span>${line}</span>\n`
+		}
+		
 		line += "\n";
 		return SGR_NORMAL + line + SGR_RESET;
 	}
