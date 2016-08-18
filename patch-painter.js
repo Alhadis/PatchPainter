@@ -79,10 +79,20 @@ class PatchPainter{
 						/((?:(?:^|\n)-.*\n)+)((?:(?:^|\n)\+.*\n)+)/gm,
 						
 						(match, removals, additions, offset) => {
-							const index = offset + match.length;
-							const token = this.sideBySide(removals, additions, format);
-							lines.push({ index, token });
-							return match.replace(/^[-+]/gm, "*");
+							const strip = /^[-+ ]/gm;
+							removals    = removals.replace(strip, "").replace(/^\n/, "");
+							additions   = additions.replace(strip, "");
+							
+							/** Only highlight characters if line-counts match */
+							if(removals.match(/\n/g).length === additions.match(/\n/g).length){
+								const index = offset + match.length;
+								const token = this.sideBySide(removals, additions, format);
+								lines.push({ index, token });
+								return match.replace(/^[-+]/gm, "*");
+							}
+							
+							/** Otherwise, leave it for the blocks below to handle */
+							return match;
 						})
 					
 					/** Removals */
@@ -165,10 +175,6 @@ class PatchPainter{
 	 */
 	sideBySide(removals, additions, format = TTY){
 		let output  = "";
-		const strip = /^[-+ ]/gm;
-		removals    = removals.replace(strip, "").replace(/^\n/, "");
-		additions   = additions.replace(strip, "");
-		
 		const changes = diff.diffWordsWithSpace(removals, additions);
 		const putHTML = (added) => {
 			let lines = "";
